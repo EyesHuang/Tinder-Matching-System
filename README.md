@@ -4,6 +4,82 @@
 ## Question 1
 Check out [this](https://hackmd.io/wp_lbzWrSc-vJFEpUb4OrQ?view) golang program. What happens when this program runs?
 
+### Answer
+The code fragment has two problems.
+- Array Size Too Large
+- Deadlock
+
+You can refer to the [link](https://github.com/EyesHuang/interview/q1) for fix version.
+
+
+#### Array Size Too Large
+It has the following error because Go has a limit on symbol size, typically around 2GB. ([ref link](https://github.com/golang/go/issues/9862))
+
+**Error**
+```
+Build Error: go build -o C:\Users\YongTeng\interview\bitorpo\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
+# q1
+./main.go:33:16: main..stmp_0: symbol too large (800000000000 bytes > 2000000000 bytes)
+./main.go:33:16: main..stmp_1: symbol too large (800000000000 bytes > 2000000000 bytes) (exit status 1)
+```
+
+Correct `for _ = range [10e10]uint64{}` to `for i := 0; i < 10e10; i++`.
+
+
+#### Deadlock
+After the correction, it has the following error due to deadlcok.
+
+**Error**
+```
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [semacquire]:
+sync.runtime_Semacquire(0xc00000a050?)
+	C:/Program Files/Go/src/runtime/sema.go:62 +0x25
+sync.(*WaitGroup).Wait(0xc00000a050)
+	C:/Program Files/Go/src/sync/waitgroup.go:116 +0x8b
+main.main()
+	C:/Users/YongTeng/interview/bitorpo/interview/q1/main.go:45 +0x270
+```
+
+Add `if else` statement for consistent lock ordering.
+
+**Origin**
+```
+func transfer(from *User, to *User, amount uint64) {
+	from.Lock.Lock()
+	to.Lock.Lock()
+	defer from.Lock.Unlock()
+	defer to.Lock.Unlock()
+
+	if from.Balance >= amount {
+		from.Balance -= amount
+		to.Balance += amount
+	}
+}
+```
+
+**Correction**
+```
+func transfer(from *User, to *User, amount uint64) {
+	if from.ID < to.ID {
+		from.Lock.Lock()
+		defer from.Lock.Unlock()
+		to.Lock.Lock()
+		defer to.Lock.Unlock()
+	} else {
+		to.Lock.Lock()
+		defer to.Lock.Unlock()
+		from.Lock.Lock()
+		defer from.Lock.Unlock()
+	}
+
+	if from.Balance >= amount {
+		from.Balance -= amount
+		to.Balance += amount
+	}
+}
+```
 
 ## Question 2
 You are required to implement an API that queries a user's recent 100
