@@ -24,7 +24,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Match'
+                  $ref: '#/components/schemas/Person'
         '400':
           $ref: '#/components/responses/400'
         '500':
@@ -84,13 +84,6 @@ components:
           type: string
         wanted_dates:
           type: integer
-    Match:
-      type: object
-      properties:
-        girl:
-          $ref: '#/components/schemas/Person'
-        boy:
-          $ref: '#/components/schemas/Person'
     ErrorResponse:
       type: array
       items:
