@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type User struct {
 	ID      uint64
@@ -24,6 +27,9 @@ func transfer(from *User, to *User, amount uint64) {
 	if from.Balance >= amount {
 		from.Balance -= amount
 		to.Balance += amount
+
+		fmt.Printf("From id: %d, balance: %d\n", from.ID, from.Balance)
+		fmt.Printf("To id: %d, balance: %d\n", to.ID, to.Balance)
 	}
 }
 

@@ -12,7 +12,7 @@ The code fragment has two problems.
 You can refer to the [link](https://github.com/EyesHuang/interview/q1) for fix version.
 
 
-#### Array Size Too Large
+<u>Array Size Too Large</u>
 It has the following error because Go has a limit on symbol size, typically around 2GB. ([ref link](https://github.com/golang/go/issues/9862))
 
 **Error**
@@ -26,7 +26,7 @@ Build Error: go build -o C:\Users\YongTeng\interview\bitorpo\interview\q1\__debu
 Correct `for _ = range [10e10]uint64{}` to `for i := 0; i < 10e10; i++`.
 
 
-#### Deadlock
+<u>Deadlock</u>
 After the correction, it has the following error due to deadlcok.
 
 **Error**
