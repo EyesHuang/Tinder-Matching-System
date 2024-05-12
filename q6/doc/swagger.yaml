@@ -4,7 +4,7 @@ info:
   title: Tinder Matching System API
   description: API for the Tinder Matching System
 paths:
-  /users:
+  /persons:
     post:
       summary: Add a new user and find matches
       description: Adds a new user to the matching system and finds any possible
