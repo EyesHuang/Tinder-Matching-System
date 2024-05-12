@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -14,23 +15,23 @@ func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 		// ctx := r.Context()
 		var p person.Person
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-			s.respond(r, w, err, http.StatusBadRequest)
+			s.handleError(w, err, http.StatusBadRequest)
 			return
 		}
 
 		// Validate the struct
 		if err := person.Validate.Struct(p); err != nil {
-			s.respond(r, w, err, http.StatusBadRequest)
+			s.handleError(w, err, http.StatusBadRequest)
 			return
 		}
 
 		persons, err := s.personService.AddPersonAndMatch(&p)
 		if err != nil {
-			s.respond(r, w, err, http.StatusInternalServerError)
+			s.handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		s.respond(r, w, persons, http.StatusOK)
+		s.respond(w, persons, http.StatusOK)
 	}
 }
 
@@ -41,22 +42,22 @@ func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 
 		nameStr := r.URL.Query().Get("name")
 		if nameStr == "" {
-			s.respond(r, w, nil, http.StatusBadRequest)
+			s.handleError(w, errors.New("missing query parameter: 'name'"), http.StatusBadRequest)
 			return
 		}
 
 		err := s.personService.RemovePerson(nameStr)
 		if err != nil {
 			if err.Error() == person.NotFoundStr {
-				s.respond(r, w, err, http.StatusNotFound)
+				s.handleError(w, err, http.StatusBadRequest)
 				return
 			}
 
-			s.respond(r, w, err, http.StatusInternalServerError)
+			s.handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		s.respond(r, w, nil, http.StatusOK)
+		s.respond(w, nil, http.StatusOK)
 	}
 }
 
@@ -68,16 +69,16 @@ func (s *Server) HandlerQuerySinglePeople() http.HandlerFunc {
 		nStr := r.URL.Query().Get("n")
 		n, err := strconv.ParseInt(nStr, 10, 32)
 		if err != nil {
-			s.respond(r, w, nil, http.StatusBadRequest)
+			s.handleError(w, errors.New("missing query parameter: 'n'"), http.StatusBadRequest)
 			return
 		}
 
 		persons, err := s.personService.QuerySinglePeople(int(n))
 		if err != nil {
-			s.respond(r, w, err, http.StatusInternalServerError)
+			s.handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		s.respond(r, w, persons, http.StatusOK)
+		s.respond(w, persons, http.StatusOK)
 	}
 }

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -14,11 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Pinger is an interface that represents any type that can respond to a PingContext.
-type Pinger interface {
-	PingContext(ctx context.Context) error
-}
-
 // Server is an HTTP server which embeds a chi router
 type Server struct {
 	router        *chi.Mux
@@ -26,24 +20,25 @@ type Server struct {
 }
 
 // NewServer creates and configures a new Server instance
-func NewServer(personService person.PersonService, p ...Pinger) *Server {
+func NewServer(personService person.PersonService) *Server {
 	s := Server{
 		router:        chi.NewRouter(),
 		personService: personService,
 	}
 
-	corsMiddleware := cors.New(cors.Options{
+	s.router.Use(corsMiddleware().Handler)
+	s.routes()
+	return &s
+}
+
+func corsMiddleware() *cors.Cors {
+	return cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
+		AllowedMethods:   []string{"GET", "POST", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	})
-
-	s.router.Use(corsMiddleware.Handler)
-	s.routes(p...)
-	return &s
 }
 
 // ErrorResponse is responsible to include multiple errors
@@ -55,31 +50,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *Server) respond(r *http.Request, w http.ResponseWriter, data interface{}, status int) {
+func (s *Server) respond(w http.ResponseWriter, data interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json")
-
-	var body interface{}
-	switch v := data.(type) {
-	case error:
-		res := ErrorResponse{
-			Errors: []string{},
-		}
-
-		for ce := v; ce != nil; ce = errors.Unwrap(ce) {
-			res.Errors = append(res.Errors, ce.Error())
-		}
-		body = res
-	case []*person.Person:
-		body = data
-	default:
-		body = nil
-		// status = http.StatusBadRequest
-	}
-
 	w.WriteHeader(status)
-	if body != nil {
-		if err := json.NewEncoder(w).Encode(body); err != nil {
-			log.Fatalln(err)
-		}
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("Failed to encode response: %v", err)
 	}
+}
+
+func (s *Server) handleError(w http.ResponseWriter, err error, status int) {
+	errs := []string{err.Error()}
+	for e := errors.Unwrap(err); e != nil; e = errors.Unwrap(e) {
+		errs = append(errs, e.Error())
+	}
+	s.respond(w, ErrorResponse{Errors: errs}, status)
 }
