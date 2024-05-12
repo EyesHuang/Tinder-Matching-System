@@ -1,32 +1,18 @@
 package tinder
 
-import "time"
-
-type Person struct {
-	Name        string      `json:"name"`
-	Height      int         `json:"height"`
-	Gender      Gender      `json:"gender"`
-	WantedDates []time.Time `json:"wanted_dates"`
-}
-
-type Gender int
-
-const (
-	Male Gender = iota
-	Female
+import (
+	"github.com/go-playground/validator"
 )
 
-func (g Gender) String() string {
-	names := [...]string{
-		"male",
-		"female",
-	}
+const NotFoundStr = "person not found"
 
-	if int(g) < len(names) {
-		return names[g]
-	}
+var Validate *validator.Validate
 
-	return "unknown"
+type Person struct {
+	Name        string `json:"name" validate:"required"`
+	Height      int    `json:"height" validate:"required,min=0"`
+	Gender      string `json:"gender" validate:"oneof=male female"`
+	WantedDates int    `json:"wanted_dates" validate:"required,min=1"`
 }
 
 type PersonService interface {

@@ -6,14 +6,19 @@ import (
 	"log"
 	"net/http"
 
+	person "tinder"
 	rHttp "tinder/http"
 	repo "tinder/repo"
 	rService "tinder/service"
+
+	"github.com/go-playground/validator"
 )
 
 func main() {
 	port := flag.Int("port", 8080, "listen port")
 	flag.Parse()
+	person.Validate = validator.New()
+
 	if err := run(*port); err != nil {
 		log.Fatal(err)
 	}

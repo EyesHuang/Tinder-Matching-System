@@ -1,12 +1,30 @@
 package http
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	person "tinder"
+)
 
 // HandlerAddSinglePersonAndMatch Add a new user to the matching system and find any possible matches for the new user
 func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// ctx := r.Context()
-		persons, err := s.personService.AddPersonAndMatch(nil)
+		var p person.Person
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+			s.respond(r, w, err, http.StatusBadRequest)
+			return
+		}
+
+		// Validate the struct
+		if err := person.Validate.Struct(p); err != nil {
+			s.respond(r, w, err, http.StatusBadRequest)
+			return
+		}
+
+		persons, err := s.personService.AddPersonAndMatch(&p)
 		if err != nil {
 			s.respond(r, w, err, http.StatusInternalServerError)
 			return
@@ -20,8 +38,20 @@ func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// ctx := r.Context()
-		err := s.personService.RemovePerson("")
+
+		nameStr := r.URL.Query().Get("name")
+		if nameStr == "" {
+			s.respond(r, w, nil, http.StatusBadRequest)
+			return
+		}
+
+		err := s.personService.RemovePerson(nameStr)
 		if err != nil {
+			if err.Error() == person.NotFoundStr {
+				s.respond(r, w, err, http.StatusNotFound)
+				return
+			}
+
 			s.respond(r, w, err, http.StatusInternalServerError)
 			return
 		}
@@ -34,7 +64,15 @@ func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 func (s *Server) HandlerQuerySinglePeople() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// ctx := r.Context()
-		persons, err := s.personService.QuerySinglePeople(5)
+
+		nStr := r.URL.Query().Get("n")
+		n, err := strconv.ParseInt(nStr, 10, 32)
+		if err != nil {
+			s.respond(r, w, nil, http.StatusBadRequest)
+			return
+		}
+
+		persons, err := s.personService.QuerySinglePeople(int(n))
 		if err != nil {
 			s.respond(r, w, err, http.StatusInternalServerError)
 			return

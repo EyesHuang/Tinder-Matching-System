@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	person "tinder"
 )
@@ -21,11 +22,6 @@ func (ms *MatcherService) AddPersonAndMatch(p *person.Person) ([]*person.Person,
 		return nil, errors.New("person already exists")
 	}
 
-	// Check if the gender is valid
-	if p.Gender != person.Male && p.Gender != person.Female {
-		return nil, errors.New("invalid gender")
-	}
-
 	// Add the person to the repository
 	if err = ms.repo.AddPerson(p); err != nil {
 		return nil, err
@@ -37,8 +33,8 @@ func (ms *MatcherService) AddPersonAndMatch(p *person.Person) ([]*person.Person,
 
 	for _, match := range potentialMatches {
 		// Update the wanted dates
-		match.WantedDates = match.WantedDates[1:]
-		p.WantedDates = p.WantedDates[1:]
+		match.WantedDates--
+		p.WantedDates--
 
 		// Update the person in the repository
 		err = ms.repo.UpdatePerson(match)
@@ -52,13 +48,14 @@ func (ms *MatcherService) AddPersonAndMatch(p *person.Person) ([]*person.Person,
 		}
 
 		// Remove the person from the matching system if their wanted dates become empty
-		if len(match.WantedDates) == 0 {
+		if match.WantedDates == 0 {
 			err = ms.repo.RemovePerson(match.Name)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if len(p.WantedDates) == 0 {
+
+		if p.WantedDates == 0 {
 			err = ms.repo.RemovePerson(p.Name)
 			if err != nil {
 				return nil, err
@@ -76,6 +73,10 @@ func (ms *MatcherService) RemovePerson(name string) error {
 	p, err := ms.repo.GetPerson(name)
 	if err != nil {
 		return err
+	}
+
+	if p == nil {
+		return fmt.Errorf(person.NotFoundStr)
 	}
 
 	// Remove the person from the repository
@@ -112,7 +113,7 @@ func (ms *MatcherService) QuerySinglePeople(n int) ([]*person.Person, error) {
 
 	// Sort the people based on the length of their WantedDates slice (ascending order)
 	sort.Slice(allPeople, func(i, j int) bool {
-		return len(allPeople[i].WantedDates) < len(allPeople[j].WantedDates)
+		return allPeople[i].WantedDates < allPeople[j].WantedDates
 	})
 
 	// Return the most N possible matched single people
@@ -134,7 +135,7 @@ func (ms *MatcherService) findPotentialMatches(p *person.Person) []*person.Perso
 }
 
 func meetsHeightRequirement(p1, p2 *person.Person) bool {
-	if p1.Gender == person.Male {
+	if p1.Gender == "male" {
 		return p1.Height > p2.Height
 	}
 	return p1.Height < p2.Height

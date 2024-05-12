@@ -69,11 +69,11 @@ func (s *Server) respond(r *http.Request, w http.ResponseWriter, data interface{
 			res.Errors = append(res.Errors, ce.Error())
 		}
 		body = res
-	case *[]person.Person:
+	case []*person.Person:
 		body = data
 	default:
 		body = nil
-		status = http.StatusBadRequest
+		// status = http.StatusBadRequest
 	}
 
 	w.WriteHeader(status)
