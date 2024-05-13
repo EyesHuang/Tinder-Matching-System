@@ -1,0 +1,109 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Tinder Matching System API
+  description: API for the Tinder Matching System
+paths:
+  /persons:
+    post:
+      summary: Add a new user and find matches
+      description: Adds a new user to the matching system and finds any possible
+        matches for the new user.
+      requestBody:
+        description: Person information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Remove a user
+      description: Removes a user from the matching system so that the user cannot be matched anymore.
+      parameters:
+        - in: query
+          name: name
+          description: Name of the person to be removed
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful response
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: Query single people
+      description: Finds the most N possible matched single people.
+      parameters:
+        - in: query
+          name: n
+          description: Number of people to return
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+        '400':
+          $ref: '#/components/responses/400'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        name:
+          type: string
+        height:
+          type: integer
+        gender:
+          type: string
+        wanted_dates:
+          type: integer
+    ErrorResponse:
+      type: array
+      items:
+        type: string
+  responses:
+    '400':
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '404':
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
