@@ -11,26 +11,36 @@ import (
 	person "tinder"
 	rMock "tinder/mock"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"github.com/stretchr/testify/assert"
 )
 
-func setupValidator() *validator.Validate {
-	return validator.New()
-}
+var validate *validator.Validate
 
-func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
-	person.Validate = setupValidator()
+func setup() (*rMock.MockPersonService, *chi.Mux) {
+	if validate == nil {
+		validate = validator.New()
+	}
+	person.Validate = validate
 
 	mockService := new(rMock.MockPersonService)
 	server := NewServer(mockService)
-	router := server.router
+	return mockService, server.router
+}
+
+func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
+	mockService, router := setup()
 
 	mockPerson := person.Person{Name: "John", Gender: "male", Height: 180, WantedDates: 3}
 	mockMatches := []*person.Person{{Name: "May", Gender: "female", Height: 160, WantedDates: 4}}
 	mockService.On("AddPersonAndMatch", &mockPerson).Return(mockMatches, nil)
 
-	body, _ := json.Marshal(mockPerson)
+	body, err := json.Marshal(mockPerson)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
 	req := httptest.NewRequest(http.MethodPost, "/persons", bytes.NewBuffer(body))
 	recorder := httptest.NewRecorder()
 
@@ -46,11 +56,7 @@ func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
 }
 
 func TestHandlerAddSinglePersonAndMatch_InvalidJSON(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	_, router := setup()
 
 	body := bytes.NewBufferString("{invalidJson:}")
 	req := httptest.NewRequest(http.MethodPost, "/persons", body)
@@ -69,14 +75,14 @@ func TestHandlerAddSinglePersonAndMatch_InvalidJSON(t *testing.T) {
 }
 
 func TestHandlerAddSinglePersonAndMatch_ValidationFailure(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	mockService, router := setup()
 
 	invalidPerson := person.Person{Name: ""}
-	body, _ := json.Marshal(invalidPerson)
+	body, err := json.Marshal(invalidPerson)
+	if err != nil {
+		t.Fatalf("Error marshaling JSON: %v", err)
+	}
+
 	req := httptest.NewRequest(http.MethodPost, "/persons", bytes.NewBuffer(body))
 	recorder := httptest.NewRecorder()
 
@@ -88,11 +94,7 @@ func TestHandlerAddSinglePersonAndMatch_ValidationFailure(t *testing.T) {
 }
 
 func TestHandlerRemoveSinglePerson_Success(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	mockService, router := setup()
 
 	mockService.On("RemovePerson", "John").Return(nil)
 
@@ -105,11 +107,7 @@ func TestHandlerRemoveSinglePerson_Success(t *testing.T) {
 }
 
 func TestHandlerRemoveSinglePerson_MissingQueryParam(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	_, router := setup()
 
 	req := httptest.NewRequest(http.MethodDelete, "/persons", nil)
 	recorder := httptest.NewRecorder()
@@ -120,11 +118,7 @@ func TestHandlerRemoveSinglePerson_MissingQueryParam(t *testing.T) {
 }
 
 func TestHandlerRemoveSinglePerson_NotFound(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	mockService, router := setup()
 
 	mockService.On("RemovePerson", "Unknown").Return(errors.New(person.NotFoundStr))
 
@@ -137,11 +131,7 @@ func TestHandlerRemoveSinglePerson_NotFound(t *testing.T) {
 }
 
 func TestHandlerQuerySinglePeople_Success(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	mockService, router := setup()
 
 	mockPeople := []*person.Person{{Name: "John", Gender: "male", Height: 180, WantedDates: 3}}
 	mockService.On("QuerySinglePeople", 1).Return(mockPeople, nil)
@@ -162,11 +152,7 @@ func TestHandlerQuerySinglePeople_Success(t *testing.T) {
 }
 
 func TestHandlerQuerySinglePeople_InvalidQueryParam(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	_, router := setup()
 
 	req := httptest.NewRequest(http.MethodGet, "/persons?n=abc", nil)
 	recorder := httptest.NewRecorder()
@@ -177,11 +163,7 @@ func TestHandlerQuerySinglePeople_InvalidQueryParam(t *testing.T) {
 }
 
 func TestHandlerQuerySinglePeople_ServiceError(t *testing.T) {
-	person.Validate = setupValidator()
-
-	mockService := new(rMock.MockPersonService)
-	server := NewServer(mockService)
-	router := server.router
+	mockService, router := setup()
 
 	mockService.On("QuerySinglePeople", 2).Return(([]*person.Person)(nil), errors.New("internal server error"))
 
