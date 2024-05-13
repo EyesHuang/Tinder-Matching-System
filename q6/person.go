@@ -22,7 +22,7 @@ type PersonService interface {
 }
 
 type PersonRepository interface {
-	GetAllPeople() ([]*Person, error)
+	GetAllPeople() []*Person
 	GetPerson(name string) (*Person, error)
 	AddPerson(p *Person) error
 	UpdatePerson(p *Person) error

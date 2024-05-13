@@ -87,7 +87,7 @@ func (ms *MatcherService) RemovePerson(name string) error {
 	}
 
 	// Update the matches for other people
-	allPeople, _ := ms.repo.GetAllPeople()
+	allPeople := ms.repo.GetAllPeople()
 	for _, other := range allPeople {
 		matches, _ := ms.repo.GetMatchesForPerson(other)
 		newMatches := make([]*person.Person, 0, len(matches))
@@ -107,10 +107,7 @@ func (ms *MatcherService) RemovePerson(name string) error {
 
 func (ms *MatcherService) QuerySinglePeople(n int) ([]*person.Person, error) {
 	// Get all people from the repository
-	allPeople, err := ms.repo.GetAllPeople()
-	if err != nil {
-		return nil, err
-	}
+	allPeople := ms.repo.GetAllPeople()
 
 	// Sort the people based on the length of their WantedDates slice (ascending order)
 	sort.Slice(allPeople, func(i, j int) bool {
@@ -125,7 +122,7 @@ func (ms *MatcherService) QuerySinglePeople(n int) ([]*person.Person, error) {
 }
 
 func (ms *MatcherService) findPotentialMatches(p *person.Person) []*person.Person {
-	allPeople, _ := ms.repo.GetAllPeople()
+	allPeople := ms.repo.GetAllPeople()
 	potentialMatches := make([]*person.Person, 0)
 	for _, other := range allPeople {
 		if p.Gender != other.Gender && meetsHeightRequirement(p, other) {

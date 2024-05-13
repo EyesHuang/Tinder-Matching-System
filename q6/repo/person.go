@@ -28,7 +28,7 @@ func NewMemoryRepo() *MemoryRepo {
 	return instance
 }
 
-func (r *MemoryRepo) GetAllPeople() ([]*person.Person, error) {
+func (r *MemoryRepo) GetAllPeople() []*person.Person {
 	r.Lock()
 	defer r.Unlock()
 
@@ -36,7 +36,7 @@ func (r *MemoryRepo) GetAllPeople() ([]*person.Person, error) {
 	for _, p := range r.people {
 		people = append(people, p)
 	}
-	return people, nil
+	return people
 }
 
 func (r *MemoryRepo) GetPerson(name string) (*person.Person, error) {
@@ -90,7 +90,7 @@ func (r *MemoryRepo) GetMatchesForPerson(p *person.Person) ([]*person.Person, er
 
 	matches, ok := r.matches[p]
 	if !ok {
-		return nil, nil // No matches found for the person
+		return nil, errors.New("no matches found for the person")
 	}
 	return matches, nil
 }

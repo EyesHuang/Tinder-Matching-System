@@ -53,6 +53,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) respond(w http.ResponseWriter, data interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
+	if data == nil {
+		return
+	}
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("Failed to encode response: %v", err)
 	}
