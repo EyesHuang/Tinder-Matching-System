@@ -8,8 +8,8 @@ import (
 
 	person "tinder"
 	rHttp "tinder/http"
-	repo "tinder/repo"
-	rService "tinder/service"
+	"tinder/repo"
+	"tinder/service"
 
 	"github.com/go-playground/validator"
 )
@@ -26,7 +26,7 @@ func main() {
 
 func run(port int) error {
 	repo := repo.NewMemoryRepo()
-	matcher := rService.NewMatcherService(repo)
+	matcher := service.NewMatcherService(repo)
 	srv := rHttp.NewServer(matcher)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), srv)
 }
