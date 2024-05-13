@@ -2,23 +2,36 @@ package db
 
 import (
 	"errors"
+	"sync"
 
 	person "tinder"
 )
 
 type MemoryRepo struct {
+	sync.Mutex
 	people  map[string]*person.Person
 	matches map[*person.Person][]*person.Person
 }
 
+var (
+	instance *MemoryRepo
+	once     sync.Once
+)
+
 func NewMemoryRepo() *MemoryRepo {
-	return &MemoryRepo{
-		people:  make(map[string]*person.Person),
-		matches: make(map[*person.Person][]*person.Person),
-	}
+	once.Do(func() {
+		instance = &MemoryRepo{
+			people:  make(map[string]*person.Person),
+			matches: make(map[*person.Person][]*person.Person),
+		}
+	})
+	return instance
 }
 
 func (r *MemoryRepo) GetAllPeople() ([]*person.Person, error) {
+	r.Lock()
+	defer r.Unlock()
+
 	people := make([]*person.Person, 0, len(r.people))
 	for _, p := range r.people {
 		people = append(people, p)
@@ -27,6 +40,9 @@ func (r *MemoryRepo) GetAllPeople() ([]*person.Person, error) {
 }
 
 func (r *MemoryRepo) GetPerson(name string) (*person.Person, error) {
+	r.Lock()
+	defer r.Unlock()
+
 	p, ok := r.people[name]
 	if !ok {
 		return nil, errors.New("person not found")
@@ -35,6 +51,9 @@ func (r *MemoryRepo) GetPerson(name string) (*person.Person, error) {
 }
 
 func (r *MemoryRepo) AddPerson(p *person.Person) error {
+	r.Lock()
+	defer r.Unlock()
+
 	if _, exists := r.people[p.Name]; exists {
 		return errors.New("person already exists")
 	}
@@ -43,6 +62,9 @@ func (r *MemoryRepo) AddPerson(p *person.Person) error {
 }
 
 func (r *MemoryRepo) UpdatePerson(p *person.Person) error {
+	r.Lock()
+	defer r.Unlock()
+
 	if _, exists := r.people[p.Name]; !exists {
 		return errors.New("person not found")
 	}
@@ -51,6 +73,9 @@ func (r *MemoryRepo) UpdatePerson(p *person.Person) error {
 }
 
 func (r *MemoryRepo) RemovePerson(name string) error {
+	r.Lock()
+	defer r.Unlock()
+
 	if _, exists := r.people[name]; !exists {
 		return errors.New("person not found")
 	}
@@ -60,6 +85,9 @@ func (r *MemoryRepo) RemovePerson(name string) error {
 }
 
 func (r *MemoryRepo) GetMatchesForPerson(p *person.Person) ([]*person.Person, error) {
+	r.Lock()
+	defer r.Unlock()
+
 	matches, ok := r.matches[p]
 	if !ok {
 		return nil, nil // No matches found for the person
@@ -68,6 +96,9 @@ func (r *MemoryRepo) GetMatchesForPerson(p *person.Person) ([]*person.Person, er
 }
 
 func (r *MemoryRepo) UpdateMatchesForPerson(p *person.Person, matches []*person.Person) error {
+	r.Lock()
+	defer r.Unlock()
+
 	_, exists := r.people[p.Name]
 	if !exists {
 		return errors.New("person not found")
