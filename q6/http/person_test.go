@@ -20,8 +20,7 @@ func setupValidator() *validator.Validate {
 }
 
 func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
-	validate := setupValidator()
-	person.Validate = validate
+	person.Validate = setupValidator()
 
 	mockService := new(rMock.MockPersonService)
 	server := NewServer(mockService)
@@ -47,8 +46,7 @@ func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
 }
 
 func TestHandlerAddSinglePersonAndMatch_InvalidJSON(t *testing.T) {
-	validate := setupValidator()
-	person.Validate = validate
+	person.Validate = setupValidator()
 
 	mockService := new(rMock.MockPersonService)
 	server := NewServer(mockService)
@@ -71,8 +69,7 @@ func TestHandlerAddSinglePersonAndMatch_InvalidJSON(t *testing.T) {
 }
 
 func TestHandlerAddSinglePersonAndMatch_ValidationFailure(t *testing.T) {
-	validate := setupValidator()
-	person.Validate = validate
+	person.Validate = setupValidator()
 
 	mockService := new(rMock.MockPersonService)
 	server := NewServer(mockService)
@@ -88,4 +85,110 @@ func TestHandlerAddSinglePersonAndMatch_ValidationFailure(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
+func TestHandlerRemoveSinglePerson_Success(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	mockService.On("RemovePerson", "John").Return(nil)
+
+	req := httptest.NewRequest(http.MethodDelete, "/persons?name=John", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+}
+
+func TestHandlerRemoveSinglePerson_MissingQueryParam(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	req := httptest.NewRequest(http.MethodDelete, "/persons", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
+func TestHandlerRemoveSinglePerson_NotFound(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	mockService.On("RemovePerson", "Unknown").Return(errors.New(person.NotFoundStr))
+
+	req := httptest.NewRequest(http.MethodDelete, "/persons?name=Unknown", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+}
+
+func TestHandlerQuerySinglePeople_Success(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	mockPeople := []*person.Person{{Name: "John", Gender: "male", Height: 180, WantedDates: 3}}
+	mockService.On("QuerySinglePeople", 1).Return(mockPeople, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/persons?n=1", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	var result []person.Person
+	if err := json.Unmarshal(recorder.Body.Bytes(), &result); err != nil {
+		t.Fatal("Expected JSON response")
+	}
+
+	assert.Equal(t, "John", result[0].Name, "Expected John in the list")
+}
+
+func TestHandlerQuerySinglePeople_InvalidQueryParam(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	req := httptest.NewRequest(http.MethodGet, "/persons?n=abc", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
+func TestHandlerQuerySinglePeople_ServiceError(t *testing.T) {
+	person.Validate = setupValidator()
+
+	mockService := new(rMock.MockPersonService)
+	server := NewServer(mockService)
+	router := server.router
+
+	mockService.On("QuerySinglePeople", 2).Return(([]*person.Person)(nil), errors.New("internal server error"))
+
+	req := httptest.NewRequest(http.MethodGet, "/persons?n=2", nil)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 }

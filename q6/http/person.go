@@ -49,7 +49,7 @@ func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 		err := s.personService.RemovePerson(nameStr)
 		if err != nil {
 			if err.Error() == person.NotFoundStr {
-				s.handleError(w, err, http.StatusBadRequest)
+				s.handleError(w, err, http.StatusNotFound)
 				return
 			}
 
