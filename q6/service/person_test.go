@@ -5,53 +5,14 @@ import (
 	"testing"
 
 	person "tinder"
+	rMock "tinder/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type MockPersonRepository struct {
-	mock.Mock
-}
-
-// Implement mock methods for PersonRepository
-func (m *MockPersonRepository) GetPerson(name string) (*person.Person, error) {
-	args := m.Called(name)
-	return args.Get(0).(*person.Person), args.Error(1)
-}
-
-func (m *MockPersonRepository) AddPerson(p *person.Person) error {
-	args := m.Called(p)
-	return args.Error(0)
-}
-
-func (m *MockPersonRepository) UpdatePerson(p *person.Person) error {
-	args := m.Called(p)
-	return args.Error(0)
-}
-
-func (m *MockPersonRepository) RemovePerson(name string) error {
-	args := m.Called(name)
-	return args.Error(0)
-}
-
-func (m *MockPersonRepository) GetAllPeople() []*person.Person {
-	args := m.Called()
-	return args.Get(0).([]*person.Person)
-}
-
-func (m *MockPersonRepository) GetMatchesForPerson(p *person.Person) ([]*person.Person, error) {
-	args := m.Called(p)
-	return args.Get(0).([]*person.Person), args.Error(1)
-}
-
-func (m *MockPersonRepository) UpdateMatchesForPerson(p *person.Person, matches []*person.Person) error {
-	args := m.Called(p, matches)
-	return args.Error(0)
-}
-
 func TestAddPersonAndMatch_Success(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 	personA := &person.Person{Name: "Alice", Gender: "female", Height: 170, WantedDates: 2}
 
@@ -71,7 +32,7 @@ func TestAddPersonAndMatch_Success(t *testing.T) {
 }
 
 func TestAddPersonAndMatch_PersonExists(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 	personA := &person.Person{Name: "Alice", Gender: "female", Height: 170}
 
@@ -84,7 +45,7 @@ func TestAddPersonAndMatch_PersonExists(t *testing.T) {
 }
 
 func TestRemovePerson_Success(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 	personName := "Alice"
 	alice := &person.Person{Name: "Alice", Gender: "female", Height: 170}
@@ -110,7 +71,7 @@ func TestRemovePerson_Success(t *testing.T) {
 }
 
 func TestRemovePerson_NotFound(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 
 	mockRepo.On("GetPerson", "Alice").Return((*person.Person)(nil), errors.New(person.NotFoundStr))
@@ -122,7 +83,7 @@ func TestRemovePerson_NotFound(t *testing.T) {
 }
 
 func TestQuerySinglePeople_Success(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 	people := []*person.Person{
 		{Name: "Alice", Gender: "female", Height: 170, WantedDates: 1},
@@ -138,7 +99,7 @@ func TestQuerySinglePeople_Success(t *testing.T) {
 }
 
 func TestQuerySinglePeople_MoreRequestedThanAvailable(t *testing.T) {
-	mockRepo := new(MockPersonRepository)
+	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 	people := []*person.Person{
 		{Name: "Alice", Gender: "female", Height: 170, WantedDates: 1},
