@@ -31,7 +31,7 @@ type MockPersonRepository struct {
 	mock.Mock
 }
 
-func (m *MockPersonRepository) GetPerson(name string) (*person.Person, error) {
+func (m *MockPersonRepository) GetPersonByName(name string) (*person.Person, error) {
 	args := m.Called(name)
 	return args.Get(0).(*person.Person), args.Error(1)
 }

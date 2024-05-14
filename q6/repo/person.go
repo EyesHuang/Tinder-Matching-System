@@ -39,10 +39,11 @@ func (r *MemoryRepo) GetAllPeople() []*person.Person {
 	return people
 }
 
-func (r *MemoryRepo) GetPerson(name string) (*person.Person, error) {
+func (r *MemoryRepo) GetPersonByName(name string) (*person.Person, error) {
 	r.Lock()
 	defer r.Unlock()
 
+	// strings.ToLower(name)
 	p, ok := r.people[name]
 	if !ok {
 		return nil, errors.New("person not found")

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	person "tinder"
 )
@@ -19,8 +20,7 @@ func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 			return
 		}
 
-		// Validate the struct
-		if err := person.Validate.Struct(p); err != nil {
+		if err := normalizeAndValidatePerson(&p); err != nil {
 			s.handleError(w, err, http.StatusBadRequest)
 			return
 		}
@@ -46,7 +46,9 @@ func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 			return
 		}
 
-		err := s.personService.RemovePerson(nameStr)
+		normalizedName := strings.ToLower(strings.TrimSpace(nameStr))
+
+		err := s.personService.RemovePerson(normalizedName)
 		if err != nil {
 			if err.Error() == person.NotFoundStr {
 				s.handleError(w, err, http.StatusNotFound)
@@ -81,4 +83,14 @@ func (s *Server) HandlerQuerySinglePeople() http.HandlerFunc {
 
 		s.respond(w, persons, http.StatusOK)
 	}
+}
+
+func normalizeAndValidatePerson(p *person.Person) error {
+	p.Name = strings.ToLower(strings.TrimSpace(p.Name))
+	p.Gender = strings.ToLower(strings.TrimSpace(p.Gender))
+
+	if err := person.Validate.Struct(p); err != nil {
+		return err
+	}
+	return nil
 }
