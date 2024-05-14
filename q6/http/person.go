@@ -13,7 +13,6 @@ import (
 // HandlerAddSinglePersonAndMatch Add a new user to the matching system and find any possible matches for the new user
 func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ctx := r.Context()
 		var p person.Person
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			s.handleError(w, err, http.StatusBadRequest)
@@ -38,8 +37,6 @@ func (s *Server) HandlerAddSinglePersonAndMatch() http.HandlerFunc {
 // HandlerRemoveSinglePerson Remove a user from the matching system so that the user cannot be matched anymore
 func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ctx := r.Context()
-
 		nameStr := r.URL.Query().Get("name")
 		if nameStr == "" {
 			s.handleError(w, errors.New("missing query parameter: 'name'"), http.StatusBadRequest)
@@ -66,8 +63,6 @@ func (s *Server) HandlerRemoveSinglePerson() http.HandlerFunc {
 // HandlerQuerySinglePeople Remove a user from the matching system so that the user cannot be matched anymore
 func (s *Server) HandlerQuerySinglePeople() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ctx := r.Context()
-
 		nStr := r.URL.Query().Get("n")
 		n, err := strconv.ParseInt(nStr, 10, 32)
 		if err != nil {

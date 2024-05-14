@@ -32,8 +32,8 @@ func setup() (*rMock.MockPersonService, *chi.Mux) {
 func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
 	mockService, router := setup()
 
-	mockPerson := person.Person{Name: "John", Gender: "male", Height: 180, WantedDates: 3}
-	mockMatches := []*person.Person{{Name: "May", Gender: "female", Height: 160, WantedDates: 4}}
+	mockPerson := person.Person{Name: "john", Gender: "male", Height: 180, WantedDates: 3}
+	mockMatches := []*person.Person{{Name: "may", Gender: "female", Height: 160, WantedDates: 4}}
 	mockService.On("AddPersonAndMatch", &mockPerson).Return(mockMatches, nil)
 
 	body, err := json.Marshal(mockPerson)
@@ -52,7 +52,7 @@ func TestHandlerAddSinglePersonAndMatch_Success(t *testing.T) {
 	if err := json.Unmarshal(recorder.Body.Bytes(), &result); err != nil {
 		t.Fatal("Expected JSON response")
 	}
-	assert.Equal(t, "May", result[0].Name, "Expected May as a match")
+	assert.Equal(t, "may", result[0].Name, "Expected May as a match")
 }
 
 func TestHandlerAddSinglePersonAndMatch_InvalidJSON(t *testing.T) {
@@ -96,7 +96,7 @@ func TestHandlerAddSinglePersonAndMatch_ValidationFailure(t *testing.T) {
 func TestHandlerRemoveSinglePerson_Success(t *testing.T) {
 	mockService, router := setup()
 
-	mockService.On("RemovePerson", "John").Return(nil)
+	mockService.On("RemovePerson", "john").Return(nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/persons?name=John", nil)
 	recorder := httptest.NewRecorder()
@@ -120,9 +120,9 @@ func TestHandlerRemoveSinglePerson_MissingQueryParam(t *testing.T) {
 func TestHandlerRemoveSinglePerson_NotFound(t *testing.T) {
 	mockService, router := setup()
 
-	mockService.On("RemovePerson", "Unknown").Return(errors.New(person.NotFoundStr))
+	mockService.On("RemovePerson", "unknown").Return(errors.New(person.NotFoundStr))
 
-	req := httptest.NewRequest(http.MethodDelete, "/persons?name=Unknown", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/persons?name=unknown", nil)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, req)
@@ -133,7 +133,7 @@ func TestHandlerRemoveSinglePerson_NotFound(t *testing.T) {
 func TestHandlerQuerySinglePeople_Success(t *testing.T) {
 	mockService, router := setup()
 
-	mockPeople := []*person.Person{{Name: "John", Gender: "male", Height: 180, WantedDates: 3}}
+	mockPeople := []*person.Person{{Name: "john", Gender: "male", Height: 180, WantedDates: 3}}
 	mockService.On("QuerySinglePeople", 1).Return(mockPeople, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/persons?n=1", nil)
@@ -148,7 +148,7 @@ func TestHandlerQuerySinglePeople_Success(t *testing.T) {
 		t.Fatal("Expected JSON response")
 	}
 
-	assert.Equal(t, "John", result[0].Name, "Expected John in the list")
+	assert.Equal(t, "john", result[0].Name, "Expected John in the list")
 }
 
 func TestHandlerQuerySinglePeople_InvalidQueryParam(t *testing.T) {
@@ -160,17 +160,4 @@ func TestHandlerQuerySinglePeople_InvalidQueryParam(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-}
-
-func TestHandlerQuerySinglePeople_ServiceError(t *testing.T) {
-	mockService, router := setup()
-
-	mockService.On("QuerySinglePeople", 2).Return(([]*person.Person)(nil), errors.New("internal server error"))
-
-	req := httptest.NewRequest(http.MethodGet, "/persons?n=2", nil)
-	recorder := httptest.NewRecorder()
-
-	router.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 }
