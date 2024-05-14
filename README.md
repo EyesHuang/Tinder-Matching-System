@@ -99,10 +99,10 @@ Check out the following SQL. Of index A or B, which has better performance
 and why?
 ```
 SELECT * FROM orders WHERE user_id = ? AND created_at >= ? AND status = ?
+```
 index A : idx_user_id_status_created_at(user_id, status, created_at)
 index B : idx_user_id_created_at_status(user_id, created_at, status)
 index C : idx_user_id_created_at(user_id, created_at)
-```
 
 ## Question 5
 In the Kafka architecture design, how does kafka scale consumer-side
