@@ -149,13 +149,42 @@ For optimal query performance, consider using **Index B (idx_user_id_created_at_
 This index is specifically designed to efficiently handle queries that filter by `user_id` (exact match), `created_at` (range), and `status` (exact match). The order of columns in the index (user_id, created_at, status) ensures it can be fully utilized for all these conditions, leading to faster query execution.
 
 ## Question 5
-In the Kafka architecture design, how does kafka scale consumer-side
-performance? Does its solution have any drawbacks? Is there any counterpart to this
-drawback?
+In the Kafka architecture design, how does kafka scale consumer-side performance? Does its solution have any drawbacks? Is there any counterpart to this drawback?
 
 ### Answer
 <details>
   <summary>Click me</summary>
+
+**Partitioning**
+Kafka improves consumer performance using partitions in topics. A topic is like a table in a database, and it can have multiple partitions. Each partition is a sequence of messages, and new messages are added to the end. Each message gets a unique id called an offset.
+
+
+**Replication**
+To make sure data is always available, Kafka copies partitions across different brokers. If one broker fails, another broker with the copy can serve the data.
+
+
+**Consumer Groups**
+Kafka uses consumer groups to increase reading speed. A group of consumers can read from a topic, with each consumer reading from different partitions. This way, the work is shared, and each partition is read by one consumer in the group.
+
+
+#### Drawbacks and Solutions
+**Ordering Only Within Partitions**
+- Issue: Kafka keeps the order of messages only within a partition, not across all partitions. This can be a problem if you need strict ordering for all messages.
+
+- Solution:
+  - Single Partition: Guarantees order but limits performance and scalability.
+  - Key-Based Ordering: Maintains order for specific keys but not globally.
+  - Custom Logic: Ensures global ordering but adds complexity and potential latency.
+
+**Rebalancing Overhead**
+- Issue: When adding or removing consumers, Kafka rebalances the consumer group. During this time, consumers stop reading messages, causing temporary delays.
+
+- Solution: Static Membership can reduce rebalancing impacts by retaining consumer identities and partition assignments across rebalances. This approach minimizes unnecessary reassignments, leading to less downtime and lower latency during rebalancing. Additionally, configuring longer session timeouts can reduce the frequency of rebalances.
+By using static membership, you can ensure a more stable and efficient consumer group rebalancing process.
+
+**Scalability Limit by Partition Count**
+- Issue: The number of partitions limits the number of consumers in a group. If there are more consumers than partitions, some consumers will be idle.
+- Solution: Increase the number of partitions, but do it carefully to avoid too much overhead. Kafka allows adding partitions dynamically as needed.
 
 
 </details>
