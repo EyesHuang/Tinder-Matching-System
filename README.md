@@ -17,7 +17,7 @@ It has the following error because Go has a limit on symbol size, typically arou
 
 **Error**
 ```
-Build Error: go build -o C:\Users\YongTeng\interview\bitorpo\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
+Build Error: go build -o C:\Users\YongTeng\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
 # q1
 ./main.go:33:16: main..stmp_0: symbol too large (800000000000 bytes > 2000000000 bytes)
 ./main.go:33:16: main..stmp_1: symbol too large (800000000000 bytes > 2000000000 bytes) (exit status 1)
