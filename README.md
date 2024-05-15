@@ -120,6 +120,9 @@ Please explain the difference between rolling upgrade and re-create
 Kubernetes deployment strategies, and the relationship between rolling upgrade and readiness probe.
 
 ### Answer
+<details>
+  <summary>Click me</summary>
+
 Kubernetes prioritizes high availability with rolling upgrades by default. This method uses readiness probes for a seamless transition:
 
 - New pods are verified healthy before replacing old ones, minimizing downtime.
@@ -128,6 +131,8 @@ Kubernetes prioritizes high availability with rolling upgrades by default. This 
 The simpler re-create strategy, though faster, has downsides:
 - Service disruption occurs during the update.
 - No gradual rollout means all pods are replaced at once, potentially causing issues.
+
+</details>
 
 ## Question 4
 Check out the following SQL. Of index A or B, which has better performance
@@ -148,6 +153,12 @@ In the Kafka architecture design, how does kafka scale consumer-side
 performance? Does its solution have any drawbacks? Is there any counterpart to this
 drawback?
 
+### Answer
+<details>
+  <summary>Click me</summary>
+
+
+</details>
 
 ## Question 6
 <details>
@@ -183,6 +194,6 @@ Other requirements :
 </details>
 
 ### Answer
-Please refer to the details under `q6` folder.
-- API documentation: `/q6/docs/swagger.yaml`
-- System design documentation: `/q6/README.md`
+Please refer to the details under [q6](https://github.com/EyesHuang/interview/tree/main/q6) folder.
+- API documentation: [/q6/docs/swagger.yaml](https://github.com/EyesHuang/interview/blob/main/q6/docs/swagger.yaml)
+- System design documentation: [/q6/README.md](https://github.com/EyesHuang/interview/blob/main/q6/README.md)
