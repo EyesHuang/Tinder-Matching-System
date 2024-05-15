@@ -117,9 +117,17 @@ $ redis-cli LRANGE purchases:user_1234 0 99
 
 ## Question 3
 Please explain the difference between rolling upgrade and re-create
-Kubernetes deployment strategies, and the relationship between rolling upgrade and
-readiness probe.
+Kubernetes deployment strategies, and the relationship between rolling upgrade and readiness probe.
 
+### Answer
+Kubernetes prioritizes high availability with rolling upgrades by default. This method uses readiness probes for a seamless transition:
+
+- New pods are verified healthy before replacing old ones, minimizing downtime.
+- Quick rollbacks are ensured if problems occur.
+
+The simpler re-create strategy, though faster, has downsides:
+- Service disruption occurs during the update.
+- No gradual rollout means all pods are replaced at once, potentially causing issues.
 
 ## Question 4
 Check out the following SQL. Of index A or B, which has better performance
@@ -144,6 +152,7 @@ drawback?
 ## Question 6
 <details>
   <summary>Click me</summary>
+
 Please follow the following requirements to implement an HTTP server and post
 your GitHub repo link.
 Design an HTTP server for the Tinder matching system. The HTTP server must support the
