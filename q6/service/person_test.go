@@ -16,7 +16,7 @@ func TestAddPersonAndMatch_Success(t *testing.T) {
 	service := NewMatcherService(mockRepo)
 	personA := &person.Person{Name: "Alice", Gender: "female", Height: 170, WantedDates: 2}
 
-	mockRepo.On("GetPerson", personA.Name).Return((*person.Person)(nil), errors.New(person.NotFoundStr))
+	mockRepo.On("GetPersonByName", personA.Name).Return((*person.Person)(nil), errors.New(person.NotFoundStr))
 	mockRepo.On("AddPerson", personA).Return(nil)
 	mockRepo.On("GetAllPeople").Return([]*person.Person{
 		{Name: "Bob", Gender: "male", Height: 180, WantedDates: 2},
@@ -36,7 +36,7 @@ func TestAddPersonAndMatch_PersonExists(t *testing.T) {
 	service := NewMatcherService(mockRepo)
 	personA := &person.Person{Name: "Alice", Gender: "female", Height: 170}
 
-	mockRepo.On("GetPerson", personA.Name).Return(personA, nil)
+	mockRepo.On("GetPersonByName", personA.Name).Return(personA, nil)
 
 	_, err := service.AddPersonAndMatch(personA)
 
@@ -53,7 +53,7 @@ func TestRemovePerson_Success(t *testing.T) {
 	charlie := &person.Person{Name: "Charlie", Gender: "male", Height: 175, WantedDates: 1}
 	allPeople := []*person.Person{bob, charlie}
 
-	mockRepo.On("GetPerson", personName).Return(alice, nil)
+	mockRepo.On("GetPersonByName", personName).Return(alice, nil)
 
 	mockRepo.On("RemovePerson", personName).Return(nil)
 
@@ -74,7 +74,7 @@ func TestRemovePerson_NotFound(t *testing.T) {
 	mockRepo := new(rMock.MockPersonRepository)
 	service := NewMatcherService(mockRepo)
 
-	mockRepo.On("GetPerson", "Alice").Return((*person.Person)(nil), errors.New(person.NotFoundStr))
+	mockRepo.On("GetPersonByName", "Alice").Return((*person.Person)(nil), errors.New(person.NotFoundStr))
 
 	err := service.RemovePerson("Alice")
 

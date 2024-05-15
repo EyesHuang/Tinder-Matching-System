@@ -17,7 +17,7 @@ It has the following error because Go has a limit on symbol size, typically arou
 
 **Error**
 ```
-Build Error: go build -o C:\Users\YongTeng\interview\bitorpo\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
+Build Error: go build -o C:\Users\YongTeng\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
 # q1
 ./main.go:33:16: main..stmp_0: symbol too large (800000000000 bytes > 2000000000 bytes)
 ./main.go:33:16: main..stmp_1: symbol too large (800000000000 bytes > 2000000000 bytes) (exit status 1)
@@ -99,10 +99,10 @@ Check out the following SQL. Of index A or B, which has better performance
 and why?
 ```
 SELECT * FROM orders WHERE user_id = ? AND created_at >= ? AND status = ?
+```
 index A : idx_user_id_status_created_at(user_id, status, created_at)
 index B : idx_user_id_created_at_status(user_id, created_at, status)
 index C : idx_user_id_created_at(user_id, created_at)
-```
 
 ## Question 5
 In the Kafka architecture design, how does kafka scale consumer-side

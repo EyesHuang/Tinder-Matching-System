@@ -18,7 +18,7 @@ func NewMatcherService(repo person.PersonRepository) *MatcherService {
 
 func (ms *MatcherService) AddPersonAndMatch(p *person.Person) ([]*person.Person, error) {
 	// Check if the person already exists
-	_, err := ms.repo.GetPerson(p.Name)
+	_, err := ms.repo.GetPersonByName(p.Name)
 	if err == nil {
 		return nil, errors.New("person already exists")
 	}
@@ -71,7 +71,7 @@ func (ms *MatcherService) AddPersonAndMatch(p *person.Person) ([]*person.Person,
 
 func (ms *MatcherService) RemovePerson(name string) error {
 	// Get the person from the repository
-	p, err := ms.repo.GetPerson(name)
+	p, err := ms.repo.GetPersonByName(name)
 	if err != nil {
 		return err
 	}

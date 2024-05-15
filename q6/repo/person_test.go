@@ -30,7 +30,7 @@ func TestGetPerson_Success(t *testing.T) {
 	err := repo.AddPerson(p)
 	assert.NoError(t, err)
 
-	result, err := repo.GetPerson("Charlie")
+	result, err := repo.GetPersonByName("Charlie")
 	assert.NoError(t, err)
 	assert.Equal(t, p, result)
 }
@@ -39,7 +39,7 @@ func TestGetPerson_NotFound(t *testing.T) {
 	repo := NewMemoryRepo()
 	p := &person.Person{Name: "Charlie"}
 	repo.AddPerson(p)
-	_, err := repo.GetPerson("Test")
+	_, err := repo.GetPersonByName("Test")
 	assert.EqualError(t, err, "person not found")
 }
 
@@ -64,7 +64,7 @@ func TestUpdatePerson_Success(t *testing.T) {
 	p := &person.Person{Name: "Dave", WantedDates: 10}
 	err := repo.UpdatePerson(p)
 	assert.NoError(t, err)
-	updatedPerson, _ := repo.GetPerson("Dave")
+	updatedPerson, _ := repo.GetPersonByName("Dave")
 	assert.Equal(t, updatedPerson.WantedDates, 10)
 }
 
