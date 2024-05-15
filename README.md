@@ -7,6 +7,8 @@ Check out [this](https://hackmd.io/wp_lbzWrSc-vJFEpUb4OrQ?view) golang program. 
 ### Answer
 <details>
   <summary>Click me</summary>
+
+
 The code fragment has two problems.
 - Array Size Too Large
 - Deadlock
@@ -90,6 +92,28 @@ purchased products. The API's RTT time should be lower than 50ms, so you need to
 Redis as the data store. How would you store the data in Redis? How would you minimize
 memory usage?
 
+### Answer
+<details>
+  <summary>Click me</summary>
+
+Redis Lists are a better choice for storing user purchases due to their ordered nature and efficient operations. The necessary operations (push, trim, and range) are well-supported by Redis Lists.
+
+A list in Redis can be treated as a queue, allowing us to easily add new purchases to the top of the list with `LPUSH` and retrieve the most recent 100 purchases with `LRANGE`. While trimming the list with `LTRIM` is not required to use `LRANGE`, it helps to keep memory usage efficient by maintaining the list at a manageable size.
+
+```
+# Data structure: purchases:<user_id> <product_id>
+
+# Add a purchase
+$ redis-cli LPUSH purchases:user_1234 product_5678
+
+# Trim the list to the latest 100 purchases
+$ redis-cli LTRIM purchases:user_1234 0 99
+
+# Get the most recent 100 purchases
+$ redis-cli LRANGE purchases:user_1234 0 99
+```
+
+</details>
 
 ## Question 3
 Please explain the difference between rolling upgrade and re-create
