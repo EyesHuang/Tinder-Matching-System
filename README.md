@@ -5,6 +5,8 @@
 Check out [this](https://hackmd.io/wp_lbzWrSc-vJFEpUb4OrQ?view) golang program. What happens when this program runs?
 
 ### Answer
+<details>
+  <summary>Click me</summary>
 The code fragment has two problems.
 - Array Size Too Large
 - Deadlock
@@ -80,6 +82,7 @@ func transfer(from *User, to *User, amount uint64) {
 	}
 }
 ```
+</details>
 
 ## Question 2
 You are required to implement an API that queries a user's recent 100
@@ -104,6 +107,10 @@ index A : idx_user_id_status_created_at(user_id, status, created_at)
 index B : idx_user_id_created_at_status(user_id, created_at, status)
 index C : idx_user_id_created_at(user_id, created_at)
 
+### Answer
+For optimal query performance, consider using **Index B (idx_user_id_created_at_status)**.
+This index is specifically designed to efficiently handle queries that filter by `user_id` (exact match), `created_at` (range), and `status` (exact match). The order of columns in the index (user_id, created_at, status) ensures it can be fully utilized for all these conditions, leading to faster query execution.
+
 ## Question 5
 In the Kafka architecture design, how does kafka scale consumer-side
 performance? Does its solution have any drawbacks? Is there any counterpart to this
@@ -111,6 +118,8 @@ drawback?
 
 
 ## Question 6
+<details>
+  <summary>Click me</summary>
 Please follow the following requirements to implement an HTTP server and post
 your GitHub repo link.
 Design an HTTP server for the Tinder matching system. The HTTP server must support the
@@ -137,3 +146,10 @@ Other requirements :
 - API documentation
 - System design documentation that also explains the time complexity of your API
 - You can list TBD tasks.
+
+</details>
+
+### Answer
+Please refer to the details under `q6` folder.
+- API documentation: `/q6/docs/swagger.yaml`
+- System design documentation: `/q6/README.md`
