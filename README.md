@@ -1,228 +1,40 @@
-# interview
+# Tinder Matching System Design
 
+## Project Layout
 
-## Question 1
-Check out [this](https://hackmd.io/wp_lbzWrSc-vJFEpUb4OrQ?view) golang program. What happens when this program runs?
+- **http**: Handles HTTP request validation and processing, controlling the response HTTP status code based on the error type.
+- **service**: Contains the main business logic.
+- **repo**: Manages the database. Currently, it uses in-memory storage. In the future, we can implement the `PersonRepository` interface to access databases like MySQL, PostgreSQL, and others.
+- **person.go**: Defines the domain object.
+- **docs**: Contains the API documentation.
 
-### Answer
-<details>
-  <summary>Click me</summary>
+## Data Structures
 
+The system uses two in-memory data structures to store the data:
 
-The code fragment has two problems.
-- Array Size Too Large
-- Deadlock
+1. **people** (`map[string]*Person`): A map to store all the people in the system, where the key is the person's name.
+2. **matches** (`map[*Person][]*Person`): A map to store the matches for each person. The key is a pointer to the person, and the value is a slice of pointers to the potential matches for that person.
 
-You can refer to the [link](https://github.com/EyesHuang/interview/q1) for fix version.
+## Matching Algorithm
 
+The matching algorithm works as follows:
 
-<u>Array Size Too Large</u>
-It has the following error because Go has a limit on symbol size, typically around 2GB. ([ref link](https://github.com/golang/go/issues/9862))
+1. When a new person is added to the system (`AddPersonAndMatch`), the `findPotentialMatches` function is called to find all potential matches for that person based on gender and height requirements.
+2. For each potential match, the `WantedDates` slice is updated by decrementing the count for both the new person and the match.
+3. If the `WantedDates` count becomes zero for any person, they are removed from the `people` map and the `matches` map.
+4. The new person and their potential matches are added to the `matches` map.
 
-**Error**
-```
-Build Error: go build -o C:\Users\YongTeng\interview\q1\__debug_bin4284365681.exe -gcflags all=-N -l .
-# q1
-./main.go:33:16: main..stmp_0: symbol too large (800000000000 bytes > 2000000000 bytes)
-./main.go:33:16: main..stmp_1: symbol too large (800000000000 bytes > 2000000000 bytes) (exit status 1)
-```
+## Time Complexity
 
-Correct `for _ = range [10e10]uint64{}` to `for i := 0; i < 10e10; i++`.
+The time complexity of the API endpoints is as follows:
 
+- **AddSinglePersonAndMatch**: O(n), where n is the number of potential matches found for the new person. This is because the `findPotentialMatches` function iterates over all the people in the system to find potential matches, but the subsequent operations (updating `WantedDates`, removing people if necessary, and updating the `matches` map) depend on the number of potential matches found, which is typically much smaller than the total number of people in the system.
+- **RemoveSinglePerson**: O(n), where n is the number of people in the system. This is because the function iterates over all the matches for other people to remove the person being removed from their potential matches.
+- **QuerySinglePeople**: O(n log n), where n is the number of people in the system. This is because the function needs to create a slice of all the people, sort it based on the `WantedDates` count, and then return the first N elements. The `sort.Slice` function uses a variant of the Quicksort algorithm, which has an average time complexity of O(n log n). In the worst case, where the slice is already sorted or reverse-sorted, the time complexity is still O(n log n).
 
-<u>Deadlock</u>
-After the correction, it has the following error due to deadlcok.
+## Potential Improvements and TBD Tasks
 
-**Error**
-```
-fatal error: all goroutines are asleep - deadlock!
-
-goroutine 1 [semacquire]:
-sync.runtime_Semacquire(0xc00000a050?)
-	C:/Program Files/Go/src/runtime/sema.go:62 +0x25
-sync.(*WaitGroup).Wait(0xc00000a050)
-	C:/Program Files/Go/src/sync/waitgroup.go:116 +0x8b
-main.main()
-	C:/Users/YongTeng/interview/bitorpo/interview/q1/main.go:45 +0x270
-```
-
-Add `if else` statement for consistent lock ordering.
-
-**Origin**
-```
-func transfer(from *User, to *User, amount uint64) {
-	from.Lock.Lock()
-	to.Lock.Lock()
-	defer from.Lock.Unlock()
-	defer to.Lock.Unlock()
-
-	if from.Balance >= amount {
-		from.Balance -= amount
-		to.Balance += amount
-	}
-}
-```
-
-**Correction**
-```
-func transfer(from *User, to *User, amount uint64) {
-	if from.ID < to.ID {
-		from.Lock.Lock()
-		defer from.Lock.Unlock()
-		to.Lock.Lock()
-		defer to.Lock.Unlock()
-	} else {
-		to.Lock.Lock()
-		defer to.Lock.Unlock()
-		from.Lock.Lock()
-		defer from.Lock.Unlock()
-	}
-
-	if from.Balance >= amount {
-		from.Balance -= amount
-		to.Balance += amount
-	}
-}
-```
-</details>
-
-## Question 2
-You are required to implement an API that queries a user's recent 100
-purchased products. The API's RTT time should be lower than 50ms, so you need to use
-Redis as the data store. How would you store the data in Redis? How would you minimize
-memory usage?
-
-### Answer
-<details>
-  <summary>Click me</summary>
-
-Redis Lists are a better choice for storing user purchases due to their ordered nature and efficient operations. The necessary operations (push, trim, and range) are well-supported by Redis Lists.
-
-A list in Redis can be treated as a queue, allowing us to easily add new purchases to the top of the list with `LPUSH` and retrieve the most recent 100 purchases with `LRANGE`. While trimming the list with `LTRIM` is not required to use `LRANGE`, it helps to keep memory usage efficient by maintaining the list at a manageable size.
-
-```
-# Data structure: purchases:<user_id> <product_id>
-
-# Add a purchase
-$ redis-cli LPUSH purchases:user_1234 product_5678
-
-# Trim the list to the latest 100 purchases
-$ redis-cli LTRIM purchases:user_1234 0 99
-
-# Get the most recent 100 purchases
-$ redis-cli LRANGE purchases:user_1234 0 99
-```
-
-</details>
-
-## Question 3
-Please explain the difference between rolling upgrade and re-create
-Kubernetes deployment strategies, and the relationship between rolling upgrade and readiness probe.
-
-### Answer
-<details>
-  <summary>Click me</summary>
-
-Kubernetes prioritizes high availability with rolling upgrades by default. This method uses readiness probes for a seamless transition:
-
-- New pods are verified healthy before replacing old ones, minimizing downtime.
-- Quick rollbacks are ensured if problems occur.
-
-The simpler re-create strategy, though faster, has downsides:
-- Service disruption occurs during the update.
-- No gradual rollout means all pods are replaced at once, potentially causing issues.
-
-</details>
-
-## Question 4
-Check out the following SQL. Of index A or B, which has better performance
-and why?
-```
-SELECT * FROM orders WHERE user_id = ? AND created_at >= ? AND status = ?
-```
-index A : idx_user_id_status_created_at(user_id, status, created_at)
-index B : idx_user_id_created_at_status(user_id, created_at, status)
-index C : idx_user_id_created_at(user_id, created_at)
-
-### Answer
-For optimal query performance, consider using **Index B (idx_user_id_created_at_status)**.
-This index is specifically designed to efficiently handle queries that filter by `user_id` (exact match), `created_at` (range), and `status` (exact match). The order of columns in the index (user_id, created_at, status) ensures it can be fully utilized for all these conditions, leading to faster query execution.
-
-## Question 5
-In the Kafka architecture design, how does kafka scale consumer-side performance? Does its solution have any drawbacks? Is there any counterpart to this drawback?
-
-### Answer
-<details>
-  <summary>Click me</summary>
-
-**Partitioning**
-Kafka improves consumer performance using partitions in topics. A topic is like a table in a database, and it can have multiple partitions. Each partition is a sequence of messages, and new messages are added to the end. Each message gets a unique id called an offset.
-
-
-**Replication**
-To make sure data is always available, Kafka copies partitions across different brokers. If one broker fails, another broker with the copy can serve the data.
-
-
-**Consumer Groups**
-Kafka uses consumer groups to increase reading speed. A group of consumers can read from a topic, with each consumer reading from different partitions. This way, the work is shared, and each partition is read by one consumer in the group.
-
-
-#### Drawbacks and Solutions
-**Ordering Only Within Partitions**
-- Issue: Kafka keeps the order of messages only within a partition, not across all partitions. This can be a problem if you need strict ordering for all messages.
-
-- Solution:
-  - Single Partition: Guarantees order but limits performance and scalability.
-  - Key-Based Ordering: Maintains order for specific keys but not globally.
-  - Custom Logic: Ensures global ordering but adds complexity and potential latency.
-
-**Rebalancing Overhead**
-- Issue: When adding or removing consumers, Kafka rebalances the consumer group. During this time, consumers stop reading messages, causing temporary delays.
-
-- Solution: Static Membership can reduce rebalancing impacts by retaining consumer identities and partition assignments across rebalances. This approach minimizes unnecessary reassignments, leading to less downtime and lower latency during rebalancing. Additionally, configuring longer session timeouts can reduce the frequency of rebalances.
-By using static membership, you can ensure a more stable and efficient consumer group rebalancing process.
-
-**Scalability Limit by Partition Count**
-- Issue: The number of partitions limits the number of consumers in a group. If there are more consumers than partitions, some consumers will be idle.
-- Solution: Increase the number of partitions, but do it carefully to avoid too much overhead. Kafka allows adding partitions dynamically as needed.
-
-
-</details>
-
-## Question 6
-<details>
-  <summary>Click me</summary>
-
-Please follow the following requirements to implement an HTTP server and post
-your GitHub repo link.
-Design an HTTP server for the Tinder matching system. The HTTP server must support the
-following three APIs:
-1. AddSinglePersonAndMatch : Add a new user to the matching system and find any
-possible matches for the new user.
-2. RemoveSinglePerson : Remove a user from the matching system so that the user
-cannot be matched anymore.
-3. QuerySinglePeople : Find the most N possible matched single people, where N is a
-request parameter.
-Here is the matching rule:
-- A single person has four input parameters: name, height, gender, and number of
-wanted dates.
-- Boys can only match girls who have lower height. Conversely, girls match boys who
-are taller.
-- Once the girl and boy match, they both use up one date. When their number of dates
-becomes zero, they should be removed from the matching system.
-Note : Please do not use other databases such as MySQL or Redis, just use in-memory
-data structure which in application to store your data.
-Other requirements :
-- Unit test
-- Docker image
-- Structured project layout
-- API documentation
-- System design documentation that also explains the time complexity of your API
-- You can list TBD tasks.
-
-</details>
-
-### Answer
-Please refer to the details under [q6](https://github.com/EyesHuang/interview/tree/main/q6) folder.
-- API documentation: [/q6/docs/swagger.yaml](https://github.com/EyesHuang/interview/blob/main/q6/docs/swagger.yaml)
-- System design documentation: [/q6/README.md](https://github.com/EyesHuang/interview/blob/main/q6/README.md)
+- **Authorization and Authentication**: Implement authorization and authentication mechanisms for security management.
+- **Logging and Monitoring**: Implement logging and monitoring mechanisms to track the system's performance and identify potential issues.
+- **Pagination and Filtering**: Add support for pagination and filtering in the `QuerySinglePeople` endpoint to provide better control over the results.
+- **Implement Golang Linter in Pre-commit**: Currently, it doesn't implement a linter due to the presence of multiple `go.mod` files in the project, which could cause problems. Once the project is extracted into an independent one, a Golang linter can be added to the pre-commit hook.
